@@ -1078,20 +1078,15 @@
      }
  
      protected float getWaterSlowDown()
-@@ -1847,8 +2222,10 @@
-                         this.motionX *= 0.9900000095367432D;
+@@ -1848,7 +2223,6 @@
                          this.motionY *= 0.9800000190734863D;
                          this.motionZ *= 0.9900000095367432D;
--                        this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+                         this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
 -
-+                        this.moveTask.thenApplyAsync((a)->{
-+                            this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-+                            return null;
-+                        },moveWorker);
                          if (this.collidedHorizontally && !this.world.isRemote)
                          {
                              double d11 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
-@@ -1864,7 +2241,8 @@
+@@ -1864,99 +2238,82 @@
  
                          if (this.onGround && !this.world.isRemote)
                          {
@@ -1100,174 +1095,190 @@
 +                                this.setFlag(7, false);
                          }
                      }
-                     else
-@@ -1874,7 +2252,8 @@
+-                    else
+-                    {
++                    else {
+                         float f6 = 0.91F;
+                         BlockPos.PooledMutableBlockPos blockpos$pooledmutableblockpos = BlockPos.PooledMutableBlockPos.retain(this.posX, this.getEntityBoundingBox().minY - 1.0D, this.posZ);
  
-                         if (this.onGround)
-                         {
+-                        if (this.onGround)
+-                        {
 -                            f6 = this.world.getBlockState(blockpos$pooledmutableblockpos).getBlock().slipperiness * 0.91F;
++                        if (this.onGround) {
 +                            IBlockState underState = this.world.getBlockState(blockpos$pooledmutableblockpos);
 +                            f6 = underState.getBlock().getSlipperiness(underState, this.world, blockpos$pooledmutableblockpos, this) * 0.91F;
                          }
  
                          float f7 = 0.16277136F / (f6 * f6 * f6);
-@@ -1894,7 +2273,8 @@
+                         float f8;
  
-                         if (this.onGround)
-                         {
+-                        if (this.onGround)
+-                        {
++                        if (this.onGround) {
+                             f8 = this.getAIMoveSpeed() * f7;
+-                        }
+-                        else
+-                        {
++                        } else {
+                             f8 = this.jumpMovementFactor;
+                         }
+ 
+                         this.moveRelative(strafe, vertical, forward, f8);
+                         f6 = 0.91F;
+ 
+-                        if (this.onGround)
+-                        {
 -                            f6 = this.world.getBlockState(blockpos$pooledmutableblockpos.setPos(this.posX, this.getEntityBoundingBox().minY - 1.0D, this.posZ)).getBlock().slipperiness * 0.91F;
++                        if (this.onGround) {
 +                            IBlockState underState = this.world.getBlockState(blockpos$pooledmutableblockpos.setPos(this.posX, this.getEntityBoundingBox().minY - 1.0D, this.posZ));
 +                            f6 = underState.getBlock().getSlipperiness(underState, this.world, blockpos$pooledmutableblockpos, this) * 0.91F;
                          }
  
-                         if (this.isOnLadder())
-@@ -1917,62 +2297,68 @@
+-                        if (this.isOnLadder())
+-                        {
++                        if (this.isOnLadder()) {
+                             float f9 = 0.15F;
+                             this.motionX = MathHelper.clamp(this.motionX, -0.15000000596046448D, 0.15000000596046448D);
+                             this.motionZ = MathHelper.clamp(this.motionZ, -0.15000000596046448D, 0.15000000596046448D);
+                             this.fallDistance = 0.0F;
+ 
+-                            if (this.motionY < -0.15D)
+-                            {
++                            if (this.motionY < -0.15D) {
+                                 this.motionY = -0.15D;
+                             }
+ 
+                             boolean flag = this.isSneaking() && this instanceof EntityPlayer;
+ 
+-                            if (flag && this.motionY < 0.0D)
+-                            {
++                            if (flag && this.motionY < 0.0D) {
+                                 this.motionY = 0.0D;
                              }
                          }
  
--                        this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
++                        float finalF = f6;
+                         this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
 -
 -                        if (this.collidedHorizontally && this.isOnLadder())
 -                        {
--                            this.motionY = 0.2D;
--                        }
--
++                        if (this.collidedHorizontally && this.isOnLadder()) {
+                             this.motionY = 0.2D;
+                         }
+ 
 -                        if (this.isPotionActive(MobEffects.LEVITATION))
 -                        {
 -                            this.motionY += (0.05D * (double)(this.getActivePotionEffect(MobEffects.LEVITATION).getAmplifier() + 1) - this.motionY) * 0.2D;
 -                        }
 -                        else
 -                        {
--                            blockpos$pooledmutableblockpos.setPos(this.posX, 0.0D, this.posZ);
--
++                        if (this.isPotionActive(MobEffects.LEVITATION)) {
++                            this.motionY += (0.05D * (double) (this.getActivePotionEffect(MobEffects.LEVITATION).getAmplifier() + 1) - this.motionY) * 0.2D;
++                        } else {
+                             blockpos$pooledmutableblockpos.setPos(this.posX, 0.0D, this.posZ);
+ 
 -                            if (!this.world.isRemote || this.world.isBlockLoaded(blockpos$pooledmutableblockpos) && this.world.getChunkFromBlockCoords(blockpos$pooledmutableblockpos).isLoaded())
-+                        float finalF = f6;
-+                        this.moveTask.thenApplyAsync(a->{
-+                            this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-+                            if (this.collidedHorizontally && this.isOnLadder())
-                             {
+-                            {
 -                                if (!this.hasNoGravity())
 -                                {
--                                    this.motionY -= 0.08D;
--                                }
-+                                this.motionY = 0.2D;
-                             }
++                            if (!this.world.isRemote || this.world.isBlockLoaded(blockpos$pooledmutableblockpos) && this.world.getChunkFromBlockCoords(blockpos$pooledmutableblockpos).isLoaded()) {
++                                if (!this.hasNoGravity()) {
+                                     this.motionY -= 0.08D;
+                                 }
+-                            }
 -                            else if (this.posY > 0.0D)
-+
-+                            if (this.isPotionActive(MobEffects.LEVITATION))
-                             {
--                                this.motionY = -0.1D;
-+                                this.motionY += (0.05D * (double)(this.getActivePotionEffect(MobEffects.LEVITATION).getAmplifier() + 1) - this.motionY) * 0.2D;
+-                            {
++                            } else if (this.posY > 0.0D) {
+                                 this.motionY = -0.1D;
+-                            }
+-                            else
+-                            {
++                            } else {
+                                 this.motionY = 0.0D;
                              }
-                             else
-                             {
--                                this.motionY = 0.0D;
-+                                blockpos$pooledmutableblockpos.setPos(this.posX, 0.0D, this.posZ);
-+
-+                                if (!this.world.isRemote || this.world.isBlockLoaded(blockpos$pooledmutableblockpos) && this.world.getChunkFromBlockCoords(blockpos$pooledmutableblockpos).isLoaded())
-+                                {
-+                                    if (!this.hasNoGravity())
-+                                    {
-+                                        this.motionY -= 0.08D;
-+                                    }
-+                                }
-+                                else if (this.posY > 0.0D)
-+                                {
-+                                    this.motionY = -0.1D;
-+                                }
-+                                else
-+                                {
-+                                    this.motionY = 0.0D;
-+                                }
-                             }
--                        }
+                         }
  
--                        this.motionY *= 0.9800000190734863D;
+                         this.motionY *= 0.9800000190734863D;
 -                        this.motionX *= (double)f6;
 -                        this.motionZ *= (double)f6;
--                        blockpos$pooledmutableblockpos.release();
-+                            this.motionY *= 0.9800000190734863D;
-+                            this.motionX *= finalF;
-+                            this.motionZ *= finalF;
-+                            blockpos$pooledmutableblockpos.release();
-+                            return null;
-+                        },moveWorker);
++                        this.motionX *= finalF;
++                        this.motionZ *= finalF;
+                         blockpos$pooledmutableblockpos.release();
                      }
                  }
-                 else
-                 {
+-                else
+-                {
++                else {
                      double d4 = this.posY;
                      this.moveRelative(strafe, vertical, forward, 0.02F);
--                    this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
--                    this.motionX *= 0.5D;
--                    this.motionY *= 0.5D;
--                    this.motionZ *= 0.5D;
-+                    this.moveTask.thenApplyAsync(f->{
-+                        this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-+                        this.motionX *= 0.5D;
-+                        this.motionY *= 0.5D;
-+                        this.motionZ *= 0.5D;
+                     this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+@@ -1964,53 +2321,46 @@
+                     this.motionY *= 0.5D;
+                     this.motionZ *= 0.5D;
  
 -                    if (!this.hasNoGravity())
 -                    {
--                        this.motionY -= 0.02D;
--                    }
-+                        if (!this.hasNoGravity())
-+                        {
-+                            this.motionY -= 0.02D;
-+                        }
++                    if (!this.hasNoGravity()) {
+                         this.motionY -= 0.02D;
+                     }
  
 -                    if (this.collidedHorizontally && this.isOffsetPositionInLiquid(this.motionX, this.motionY + 0.6000000238418579D - this.posY + d4, this.motionZ))
 -                    {
--                        this.motionY = 0.30000001192092896D;
--                    }
-+                        if (this.collidedHorizontally && this.isOffsetPositionInLiquid(this.motionX, this.motionY + 0.6000000238418579D - this.posY + d4, this.motionZ))
-+                        {
-+                            this.motionY = 0.30000001192092896D;
-+                        }
-+                        return null;
-+                    },moveWorker);
++                    if (this.collidedHorizontally && this.isOffsetPositionInLiquid(this.motionX, this.motionY + 0.6000000238418579D - this.posY + d4, this.motionZ)) {
+                         this.motionY = 0.30000001192092896D;
+                     }
                  }
              }
-             else
-@@ -1999,20 +2385,24 @@
+-            else
+-            {
++            else {
+                 double d0 = this.posY;
+                 float f1 = this.getWaterSlowDown();
+                 float f2 = 0.02F;
+-                float f3 = (float)EnchantmentHelper.getDepthStriderModifier(this);
++                float f3 = (float) EnchantmentHelper.getDepthStriderModifier(this);
+ 
+-                if (f3 > 3.0F)
+-                {
++                if (f3 > 3.0F) {
+                     f3 = 3.0F;
+                 }
+ 
+-                if (!this.onGround)
+-                {
++                if (!this.onGround) {
+                     f3 *= 0.5F;
+                 }
+ 
+-                if (f3 > 0.0F)
+-                {
++                if (f3 > 0.0F) {
+                     f1 += (0.54600006F - f1) * f3 / 3.0F;
+                     f2 += (this.getAIMoveSpeed() - f2) * f3 / 3.0F;
                  }
  
                  this.moveRelative(strafe, vertical, forward, f2);
--                this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
--                this.motionX *= (double)f1;
--                this.motionY *= 0.800000011920929D;
--                this.motionZ *= (double)f1;
 +                float finalF = f1;
-+                this.moveTask.thenApplyAsync(f->{
-+                    this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
-+                    this.motionX *= (double) finalF;
-+                    this.motionY *= 0.800000011920929D;
-+                    this.motionZ *= (double) finalF;
+                 this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+-                this.motionX *= (double)f1;
++                this.motionX *= (double) finalF;
+                 this.motionY *= 0.800000011920929D;
+-                this.motionZ *= (double)f1;
++                this.motionZ *= (double) finalF;
  
 -                if (!this.hasNoGravity())
 -                {
--                    this.motionY -= 0.02D;
--                }
-+                    if (!this.hasNoGravity())
-+                    {
-+                        this.motionY -= 0.02D;
-+                    }
++                if (!this.hasNoGravity()) {
+                     this.motionY -= 0.02D;
+                 }
  
 -                if (this.collidedHorizontally && this.isOffsetPositionInLiquid(this.motionX, this.motionY + 0.6000000238418579D - this.posY + d0, this.motionZ))
 -                {
--                    this.motionY = 0.30000001192092896D;
--                }
-+                    if (this.collidedHorizontally && this.isOffsetPositionInLiquid(this.motionX, this.motionY + 0.6000000238418579D - this.posY + d0, this.motionZ))
-+                    {
-+                        this.motionY = 0.30000001192092896D;
-+                    }
-+                    return null;
-+                },moveWorker);
++                if (this.collidedHorizontally && this.isOffsetPositionInLiquid(this.motionX, this.motionY + 0.6000000238418579D - this.posY + d0, this.motionZ)) {
+                     this.motionY = 0.30000001192092896D;
+                 }
              }
-         }
- 
-@@ -2054,6 +2444,7 @@
+@@ -2054,6 +2404,7 @@
  
      public void onUpdate()
      {
@@ -1275,7 +1286,7 @@
          super.onUpdate();
          this.updateActiveHand();
  
-@@ -2096,7 +2487,9 @@
+@@ -2096,7 +2447,9 @@
  
                  if (!ItemStack.areItemStacksEqual(itemstack1, itemstack))
                  {
@@ -1285,7 +1296,7 @@
  
                      if (!itemstack.isEmpty())
                      {
-@@ -2134,7 +2527,6 @@
+@@ -2134,7 +2487,6 @@
                  }
              }
          }
@@ -1293,7 +1304,7 @@
          this.onLivingUpdate();
          double d0 = this.posX - this.prevPosX;
          double d1 = this.posZ - this.prevPosZ;
-@@ -2172,10 +2564,7 @@
+@@ -2172,10 +2524,7 @@
          }
  
          this.onGroundSpeedFactor += (f - this.onGroundSpeedFactor) * 0.3F;
@@ -1304,7 +1315,7 @@
  
          while (this.rotationYaw - this.prevRotationYaw < -180.0F)
          {
-@@ -2217,7 +2606,6 @@
+@@ -2217,7 +2566,6 @@
              this.prevRotationYawHead += 360.0F;
          }
  
@@ -1312,7 +1323,7 @@
          this.movedDistance += f5;
  
          if (this.isElytraFlying())
-@@ -2303,8 +2691,6 @@
+@@ -2303,8 +2651,6 @@
              this.motionZ = 0.0D;
          }
  
@@ -1321,7 +1332,7 @@
          if (this.isMovementBlocked())
          {
              this.isJumping = false;
-@@ -2314,14 +2700,9 @@
+@@ -2314,14 +2660,9 @@
          }
          else if (this.isServerWorld())
          {
@@ -1336,7 +1347,7 @@
          if (this.isJumping)
          {
              if (this.isInWater())
-@@ -2343,17 +2724,12 @@
+@@ -2343,17 +2684,12 @@
              this.jumpTicks = 0;
          }
  
@@ -1354,7 +1365,7 @@
      }
  
      private void updateElytra()
-@@ -2385,7 +2761,8 @@
+@@ -2385,7 +2721,8 @@
  
          if (!this.world.isRemote)
          {
@@ -1364,7 +1375,7 @@
          }
      }
  
-@@ -2419,9 +2796,13 @@
+@@ -2419,9 +2756,13 @@
                  }
              }
  
@@ -1379,7 +1390,7 @@
                  this.collideWithEntity(entity);
              }
          }
-@@ -2519,12 +2900,12 @@
+@@ -2519,12 +2860,12 @@
  
      public boolean canBeCollidedWith()
      {
@@ -1394,7 +1405,7 @@
      }
  
      protected void markVelocityChanged()
-@@ -2575,6 +2956,40 @@
+@@ -2575,6 +2916,40 @@
          this.potionsNeedUpdate = true;
      }
  
@@ -1435,7 +1446,7 @@
      public abstract EnumHandSide getPrimaryHand();
  
      public boolean isHandActive()
-@@ -2592,15 +3007,23 @@
+@@ -2592,15 +2967,23 @@
          if (this.isHandActive())
          {
              ItemStack itemstack = this.getHeldItem(this.getActiveHand());
@@ -1460,7 +1471,7 @@
                  {
                      this.onItemUseFinish();
                  }
-@@ -2618,8 +3041,10 @@
+@@ -2618,8 +3001,10 @@
  
          if (!itemstack.isEmpty() && !this.isHandActive())
          {
@@ -1472,7 +1483,7 @@
  
              if (!this.world.isRemote)
              {
-@@ -2700,7 +3125,27 @@
+@@ -2700,7 +3085,27 @@
          if (!this.activeItemStack.isEmpty() && this.isHandActive())
          {
              this.updateItemUse(this.activeItemStack, 16);
@@ -1501,7 +1512,7 @@
              this.resetActiveHand();
          }
      }
-@@ -2724,7 +3169,8 @@
+@@ -2724,7 +3129,8 @@
      {
          if (!this.activeItemStack.isEmpty())
          {
@@ -1511,7 +1522,7 @@
          }
  
          this.resetActiveHand();
-@@ -2808,11 +3254,14 @@
+@@ -2808,11 +3214,14 @@
  
              if (flag1)
              {
@@ -1531,7 +1542,7 @@
                  }
              }
          }
-@@ -2847,11 +3296,41 @@
+@@ -2847,11 +3256,41 @@
          }
      }
  
@@ -1573,7 +1584,7 @@
      public boolean attackable()
      {
          return true;
-@@ -2861,4 +3340,30 @@
+@@ -2861,4 +3300,30 @@
      public void setPartying(BlockPos pos, boolean p_191987_2_)
      {
      }

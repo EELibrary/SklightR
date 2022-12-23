@@ -209,7 +209,7 @@
                              entity1.applyEntityCollision(this);
                          }
                      }
-@@ -384,22 +467,30 @@
+@@ -384,48 +467,72 @@
              }
              else
              {
@@ -242,38 +242,33 @@
      }
  
      public void onActivatorRailPass(int x, int y, int z, boolean receivingPower)
-@@ -408,25 +499,49 @@
- 
-     protected void moveDerailedMinecart()
      {
+     }
+ 
+-    protected void moveDerailedMinecart()
+-    {
 -        double d0 = this.getMaximumSpeed();
++    protected void moveDerailedMinecart() {
 +        double d0 = onGround ? this.getMaximumSpeed() : getMaxSpeedAirLateral();
          this.motionX = MathHelper.clamp(this.motionX, -d0, d0);
          this.motionZ = MathHelper.clamp(this.motionZ, -d0, d0);
  
 -        if (this.onGround)
-+        double moveY = motionY;
-+        if(getMaxSpeedAirVertical() > 0 && motionY > getMaxSpeedAirVertical())
-         {
+-        {
 -            this.motionX *= 0.5D;
 -            this.motionY *= 0.5D;
 -            this.motionZ *= 0.5D;
++        double moveY = motionY;
++        if (getMaxSpeedAirVertical() > 0 && motionY > getMaxSpeedAirVertical()) {
 +            moveY = getMaxSpeedAirVertical();
-+            if(Math.abs(motionX) < 0.3f && Math.abs(motionZ) < 0.3f)
-+            {
++            if (Math.abs(motionX) < 0.3f && Math.abs(motionZ) < 0.3f) {
 +                moveY = 0.15f;
 +                motionY = moveY;
 +            }
          }
  
 -        this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
--
--        if (!this.onGround)
-+        if (this.onGround)
-         {
--            this.motionX *= 0.949999988079071D;
--            this.motionY *= 0.949999988079071D;
--            this.motionZ *= 0.949999988079071D;
++        if (this.onGround) {
 +            // CraftBukkit start - replace magic numbers with our variables
 +            // this.motionX *= 0.5D;
 +            // this.motionY *= 0.5D;
@@ -282,28 +277,28 @@
 +            this.motionY *= this.derailedY;
 +            this.motionZ *= this.derailedZ;
 +            // CraftBukkit end
-         }
-+
++        }
+ 
+-        if (!this.onGround)
+-        {
+-            this.motionX *= 0.949999988079071D;
+-            this.motionY *= 0.949999988079071D;
+-            this.motionZ *= 0.949999988079071D;
 +        double finalMoveY = moveY;
-+        this.moveTask.thenApplyAsync(f->{
-+            this.move(MoverType.SELF, this.motionX, finalMoveY, this.motionZ);
-+            if (!this.onGround)
-+            {
-+                // CraftBukkit start - replace magic numbers with our variables
-+                // this.motionX *= getDragAir();
-+                // this.motionY *= getDragAir();
-+                // this.motionZ *= getDragAir();
-+                this.motionX *= this.flyingX;
-+                this.motionY *= this.flyingY;
-+                this.motionZ *= this.flyingZ;
-+                // CraftBukkit end
-+            }
-+            return null;
-+        },moveWorker);
++        this.move(MoverType.SELF, this.motionX, finalMoveY, this.motionZ);
++        if (!this.onGround) {
++            // CraftBukkit start - replace magic numbers with our variables
++            // this.motionX *= getDragAir();
++            // this.motionY *= getDragAir();
++            // this.motionZ *= getDragAir();
++            this.motionX *= this.flyingX;
++            this.motionY *= this.flyingY;
++            this.motionZ *= this.flyingZ;
++            // CraftBukkit end
+         }
      }
  
-     @SuppressWarnings("incomplete-switch")
-@@ -445,25 +560,25 @@
+@@ -445,25 +552,25 @@
              flag1 = !flag;
          }
  
@@ -335,7 +330,7 @@
                  ++this.posY;
          }
  
-@@ -509,7 +624,7 @@
+@@ -509,7 +616,7 @@
              }
          }
  
@@ -344,7 +339,7 @@
          {
              double d17 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
  
-@@ -555,20 +670,8 @@
+@@ -555,20 +662,8 @@
          this.posX = d18 + d1 * d10;
          this.posZ = d19 + d2 * d10;
          this.setPosition(this.posX, this.posY, this.posZ);
@@ -366,7 +361,7 @@
          if (aint[0][1] != 0 && MathHelper.floor(this.posX) - pos.getX() == aint[0][0] && MathHelper.floor(this.posZ) - pos.getZ() == aint[0][2])
          {
              this.setPosition(this.posX, this.posY + (double)aint[0][1], this.posZ);
-@@ -605,8 +708,14 @@
+@@ -605,8 +700,14 @@
              this.motionZ = d5 * (double)(i - pos.getZ());
          }
  
@@ -382,7 +377,7 @@
              double d15 = Math.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
  
              if (d15 > 0.01D)
-@@ -642,7 +751,7 @@
+@@ -642,7 +743,7 @@
  
      protected void applyDrag()
      {
@@ -391,7 +386,7 @@
          {
              this.motionX *= 0.996999979019165D;
              this.motionY *= 0.0D;
-@@ -683,7 +792,7 @@
+@@ -683,7 +784,7 @@
  
          if (BlockRailBase.isRailBlock(iblockstate))
          {
@@ -400,7 +395,7 @@
              y = (double)j;
  
              if (blockrailbase$enumraildirection.isAscending())
-@@ -733,7 +842,7 @@
+@@ -733,7 +834,7 @@
  
          if (BlockRailBase.isRailBlock(iblockstate))
          {
@@ -409,7 +404,7 @@
              int[][] aint = MATRIX[blockrailbase$enumraildirection.getMetadata()];
              double d0 = (double)i + 0.5D + (double)aint[0][0] * 0.5D;
              double d1 = (double)j + 0.0625D + (double)aint[0][1] * 0.5D;
-@@ -830,12 +939,24 @@
+@@ -830,12 +931,24 @@
  
      public void applyEntityCollision(Entity entityIn)
      {
@@ -434,7 +429,7 @@
                      double d0 = entityIn.posX - this.posX;
                      double d1 = entityIn.posZ - this.posZ;
                      double d2 = d0 * d0 + d1 * d1;
-@@ -877,7 +998,7 @@
+@@ -877,7 +990,7 @@
                              double d7 = entityIn.motionX + this.motionX;
                              double d8 = entityIn.motionZ + this.motionZ;
  
@@ -443,7 +438,7 @@
                              {
                                  this.motionX *= 0.20000000298023224D;
                                  this.motionZ *= 0.20000000298023224D;
-@@ -885,7 +1006,7 @@
+@@ -885,7 +998,7 @@
                                  entityIn.motionX *= 0.949999988079071D;
                                  entityIn.motionZ *= 0.949999988079071D;
                              }
@@ -452,7 +447,7 @@
                              {
                                  entityIn.motionX *= 0.20000000298023224D;
                                  entityIn.motionZ *= 0.20000000298023224D;
-@@ -971,7 +1092,7 @@
+@@ -971,7 +1084,7 @@
          return ((Integer)this.dataManager.get(ROLLING_DIRECTION)).intValue();
      }
  
@@ -461,7 +456,7 @@
  
      public IBlockState getDisplayTile()
      {
-@@ -1014,7 +1135,245 @@
+@@ -1014,7 +1127,242 @@
      {
          this.getDataManager().set(SHOW_BLOCK, Boolean.valueOf(showBlock));
      }
@@ -514,10 +509,7 @@
 +        mZ = MathHelper.clamp(mZ, -max, max);
 +        double finalMX = mX;
 +        double finalMZ = mZ;
-+        this.moveTask.thenApplyAsync(f->{
-+            this.move(MoverType.SELF, finalMX, 0.0D, finalMZ);
-+            return null;
-+        },moveWorker);
++        this.move(MoverType.SELF, finalMX, 0.0D, finalMZ);
 +    }
 +
 +    /**
@@ -707,7 +699,7 @@
      public static enum Type
      {
          RIDEABLE(0, "MinecartRideable"),
-@@ -1025,7 +1384,7 @@
+@@ -1025,7 +1373,7 @@
          HOPPER(5, "MinecartHopper"),
          COMMAND_BLOCK(6, "MinecartCommandBlock");
  
@@ -716,7 +708,7 @@
          private final int id;
          private final String name;
  
-@@ -1048,16 +1407,38 @@
+@@ -1048,16 +1396,38 @@
          @SideOnly(Side.CLIENT)
          public static EntityMinecart.Type getById(int idIn)
          {
